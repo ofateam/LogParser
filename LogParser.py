@@ -155,58 +155,57 @@ def log_parser(log_file_name):
 	# Open log file and read line by line
 	with open(log_file_name, "r") as log_file:
 	    for line in log_file:
-			attributes = line.split(',')
-			size = len(attributes)
+		attributes = line.split(',')
+		size = len(attributes)
 
-			# Check line attributes and size
-			if size == LINE_SIZE \
-				and attributes[8].strip() \
-				and '=,' not in line \
-				and '=""' not in line:
+		# Check line attributes and size
+		if size == LINE_SIZE \
+			and attributes[8].strip() \
+			and '=,' not in line \
+			and '=""' not in line:
+			# Get attributes of the current log			
+			date_time, date, time = \
+				get_datetime(attributes)
+			source_ip, source_interface = \
+				get_source(attributes)
+			dest_ip, dest_port, dest_interface = \
+				get_destination(attributes)
+			action, service = \
+				get_action_service(attributes)
 
-				# Get attributes of the current log			
-				date_time, date, time = \
-					get_datetime(attributes)
-				source_ip, source_interface = \
-					get_source(attributes)
-				dest_ip, dest_port, dest_interface = \
-					get_destination(attributes)
-				action, service = \
-					get_action_service(attributes)
-
-				# Parse time of the current log
-				current_time = \
-					str(date_time.time()).split(':')
-				hour = current_time[0].strip()
-				minute = current_time[1].strip()
-				second = current_time[2].strip()
-				time_interval = hour + minute[0] + '0'
+			# Parse time of the current log
+			current_time = \
+				str(date_time.time()).split(':')
+			hour = current_time[0].strip()
+			minute = current_time[1].strip()
+			second = current_time[2].strip()
+			time_interval = hour + minute[0] + '0'
 				
-				# Set time interval of the current log
-				if int(minute[0]) == 5:
-					if int(hour) == 23:
-						time_interval += \
-							'_' + hour + str(59)
+			# Set time interval of the current log
+			if int(minute[0]) == 5:
+				if int(hour) == 23:
+					time_interval += \
+						'_' + hour + str(59)
 
-					elif int(hour) < 9:
-						time_interval += '_0' + \
-							str(int(hour) + 1) + '00'
+				elif int(hour) < 9:
+					time_interval += '_0' + \
+						str(int(hour) + 1) + '00'
 	
-					elif int(hour) >= 9:
-						time_interval += '_' + \
-							str(int(hour) + 1) + '00'
+				elif int(hour) >= 9:
+					time_interval += '_' + \
+						str(int(hour) + 1) + '00'
 				
-				else:
-					time_interval += '_' + hour + \
-						str(int(minute[0]) + 1) + '0'
+			else:
+				time_interval += '_' + hour + \
+					str(int(minute[0]) + 1) + '0'
 
-				# Insert current traffic into database
-				log_id = insert_traffic_into_db( \
-					cursor, source_ip, dest_ip, dest_port)				
+			# Insert current traffic into database
+			log_id = insert_traffic_into_db( \
+				cursor, source_ip, dest_ip, dest_port)				
 				
-				# Increase count of the current log
-				update_log_count( \
-					cursor, log_id, date, time_interval)
+			# Increase count of the current log
+			update_log_count( \
+				cursor, log_id, date, time_interval)
 
 	# Close database connection
 	database.close()	
@@ -225,4 +224,3 @@ if __name__ == '__main__':
 
 	# Print output information
 	print '\n# Elapsed time is ', str(time()-start)
-
